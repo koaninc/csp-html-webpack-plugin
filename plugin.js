@@ -115,20 +115,24 @@ class CspHtmlWebpackPlugin {
 
     const policyObj = JSON.parse(JSON.stringify(this.policy));
 
-    const inlineSrc = $('script:not([src])')
-      .map((i, element) => this.hash($(element).html()))
-      .get();
-    const inlineStyle = $('style:not([href])')
-      .map((i, element) => this.hash($(element).html()))
-      .get();
-
     // Wrapped in flatten([]) to handle both when policy is a string and an array
-    policyObj['script-src'] = flatten([policyObj['script-src']]).concat(
-      inlineSrc
-    );
-    policyObj['style-src'] = flatten([policyObj['style-src']]).concat(
-      inlineStyle
-    );
+    const flattenedPolicyObjScriptSrc = flatten([policyObj['script-src']]);
+    const flattenedPolicyObjStyleSrc = flatten([policyObj['style-src']]);
+
+    if (!flattenedPolicyObjScriptSrc.includes('\'unsafe-inline\'')) {
+      const inlineSrc = $('script:not([src])')
+        .map((i, element) => this.hash($(element).html()))
+        .get();
+      policyObj['script-src'] = flattenedPolicyObjScriptSrc.concat(inlineSrc);
+    }
+
+    if (!flattenedPolicyObjStyleSrc.includes('\'unsafe-inline\'')) {
+      const inlineStyle = $('style:not([href])')
+        .map((i, element) => this.hash($(element).html()))
+        .get();
+
+      policyObj['style-src'] = flattenedPolicyObjStyleSrc.concat(inlineStyle);
+    }
 
     metaTag.attr('content', this.buildPolicy(policyObj));
 
